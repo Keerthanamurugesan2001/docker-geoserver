@@ -8,7 +8,7 @@ It also addresses common issues encountered with login redirects over HTTPS and 
 - [Docker](https://docs.docker.com/engine/install/ubuntu/) & Docker Compose installed on your server.
 - [Nginx](https://docs.vultr.com/how-to-install-nginx-web-server-on-ubuntu-24-04?ref=9141994&utm_source=performance-max-apac&utm_medium=paidmedia&obility_id=16876059738&&utm_campaign=APAC_-_India_-_Performance_Max_-_1001&utm_term=&utm_content=&ref=9141994&gad_source=1&gclid=Cj0KCQiA0--6BhCBARIsADYqyL8qSDD8yKeGT1Nxk3vMHSp7t2meQCy6NYQyOlZwluYTaDS0EzVH-DEaAse1EALw_wcB) installed locally on the server for reverse proxy.
 - [Git]
-- Certbot.
+- [Certbot](https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal).
 
 ## Step-by-Step Setup
 
@@ -55,13 +55,13 @@ sudo nano /etc/nginx/conf.d/geoserver.conf
 ```
 
 server {
-    listen 443 ssl; # managed by Certbot
-    server_name geoserver.groupstrategy7.com;  # Your actual domain
+    listen 443 ssl;
+    server_name geoserver.portail-repae.com; 
 
-    ssl_certificate /etc/letsencrypt/live/geoserver.groupstrategy7.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/geoserver.groupstrategy7.com/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/geoserver.portail-repae.com/fullchain.pem; 
+    ssl_certificate_key /etc/letsencrypt/live/geoserver.portail-repae.com/privkey.pem; 
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; 
 
     location / {
         proxy_pass http://127.0.0.1:8000;  # Adjust the backend service address
@@ -79,8 +79,8 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;  # Important for HTTPS
-        proxy_set_header X-Script-Name /geoserver;  # Important for GeoServer to recognize the context
+        proxy_set_header X-Forwarded-Proto $scheme; 
+        proxy_set_header X-Script-Name /geoserver;  
         client_max_body_size 250M;
 }
 
@@ -95,8 +95,8 @@ server {
 
 server {
     listen 80;
-    server_name geoserver.groupstrategy7.com;
-    return 301 https://$host$request_uri; # Redirect to HTTPS
+    server_name geoserver.portail-repae.com;
+    return 301 https://$host$request_uri; 
 }
 ```
 
@@ -117,6 +117,20 @@ sudo systemctl enable nginx
 ```
 sudo systemctl status nginx
 ```
+
+**restart**
+```
+sudo systemctl restart nginx
+```
+
+Reload nginx
+
+```
+sudo nginx -t && sudo systemctl reload nginx
+```
+test
+
+
 
 ### 4. Fixing the Login Redirect Issue (j_spring_security_check)
 When using HTTPS, some users may face an issue where the login page redirects from HTTPS to HTTP, causing login failures. This issue is related to the j_spring_security_check handler in GeoServer.
