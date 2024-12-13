@@ -41,8 +41,82 @@ docker-compose up -d
 
 ### setp 3. Nginx Configuration
 
+**Set Up NGINX:**
+
+Install NGINX locally on your machine or server.
+Place the nginx.conf in the** /etc/nginx/conf.d/** directory or as specified in your local configuration.
+Restart NGINX to apply changes: `sudo systemctl restart nginx`.
+
+```
+sudo nano /etc/nginx/conf.d/geoserver.conf
+```
 
 
+```
+
+server {
+    listen 443 ssl; # managed by Certbot
+    server_name geoserver.groupstrategy7.com;  # Your actual domain
+
+    ssl_certificate /etc/letsencrypt/live/geoserver.groupstrategy7.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/geoserver.groupstrategy7.com/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;  # Adjust the backend service address
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;  # Important for HTTPS
+        client_max_body_size 250M;
+    }
+
+    location /geoserver {
+        proxy_redirect http://127.0.0.1:8000/geoserver https://$host/geoserver;
+
+        proxy_pass http://127.0.0.1:8000/geoserver;  # Adjust the backend service address
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;  # Important for HTTPS
+        proxy_set_header X-Script-Name /geoserver;  # Important for GeoServer to recognize the context
+        client_max_body_size 250M;
+}
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+}
+
+server {
+    listen 80;
+    server_name geoserver.groupstrategy7.com;
+    return 301 https://$host$request_uri; # Redirect to HTTPS
+}
+```
+
+**Start NGINX**
+
+```
+sudo systemctl start nginx
+```
+
+**Enable NGINX to Start on Boot**
+
+```
+sudo systemctl enable nginx
+```
+
+**see status**
+
+```
+sudo systemctl status nginx
+```
 
 ### 4. Fixing the Login Redirect Issue (j_spring_security_check)
 When using HTTPS, some users may face an issue where the login page redirects from HTTPS to HTTP, causing login failures. This issue is related to the j_spring_security_check handler in GeoServer.
